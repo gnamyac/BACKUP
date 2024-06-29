@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Définir les variables
+source_dir="/chemin/source/fichiers"  # Remplacer par le chemin d'accès au répertoire source
+backup_dir="/chemin/repertoire/distant" # Remplacer par le chemin d'accès au répertoire distant
+backup_name="sauvegarde-$(date +%Y-%m-%d)"  # Nom de l'archive de sauvegarde (format AAAA-MM-JJ)
+log_file="/var/log/sauvegarde.log"  # Fichier de journalisation
+
+# Vérifier si le répertoire source existe
+if [ ! -d "$source_dir" ]; then
+  echo "Erreur: Le répertoire source '$source_dir' n'existe pas." >> $log_file
+  exit 1
+fi
+
+# Vérifier si le répertoire distant existe
+if [ ! -d "$backup_dir" ]; then
+  echo "Erreur: Le répertoire distant '$backup_dir' n'existe pas." >> $log_file
+  exit 1
+fi
+
+# Créer l'archive de sauvegarde
+tar -czvf "$backup_dir/$backup_name.tar.gz" "$source_dir" 2>> $log_file
+
+# Vérifier la réussite de la sauvegarde
+if [ $? -ne 0 ]; then
+  echo "Échec de la sauvegarde: Erreur lors de la création de l'archive." >> $log_file
+  exit 1
+fi
+echo "Sauvegarde réussie: $backup_name.tar.gz" >> $log_file
+
+# Supprimer les anciennes sauvegardes (plus d'un mois)
+find "$backup_dir" -type f -name "*.tar.gz" -mtime +30 -delete 2>> $log_file
+
+echo "Suppression des anciennes sauvegardes réussie." >> $log_file
+
+
